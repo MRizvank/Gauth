@@ -21,7 +21,7 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
 }));
-
+app.set('view engine', 'ejs');
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -29,8 +29,7 @@ app.use('/api',shortUrl)
 
 // Home Route
 app.get('/', (req, res) => {
-  res.send(`<h1>Welcome to Google Auth App</h1>
-            <a href="/auth/google">Login with Google</a>`);
+  res.render('login');
 });
 
 // Google Auth Initiation Route
@@ -48,10 +47,7 @@ app.get('/auth/google/callback',
 // Protected Dashboard Route
 app.get('/dashboard', (req, res) => {
   if (req.isAuthenticated()) {
-    res.send(`<h1>Welcome, ${req.user.displayName}!</h1>
-              <p>Email: ${req.user.emails[0].value}</p>
-              <img src="${req.user.photos[0].value}" alt="Profile Picture" />
-              <br><a href="/logout">Logout</a>`);
+    res.render('Dashboard', { user: req.user }); 
   } else {
     res.redirect('/');
   }
@@ -59,10 +55,15 @@ app.get('/dashboard', (req, res) => {
 
 // Logout Route
 app.get('/logout', (req, res) => {
-  req.logout(() => {
+  req.logout((err) => {
+    if (err) {
+      return next(err);
+    }
+    req.session.destroy(); // Clear the session
     res.redirect('/');
   });
 });
+
 
 connection()
   .then(() => {
