@@ -19,18 +19,27 @@
       text-align: center;
       font-size: 24px;
       font-weight: bold;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
+    .dashboard-container {
+      display: flex;
+      justify-content: space-between;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    /* Profile Section */
     .profile-container {
-      position: absolute;
-      top: 20px;
-      right: 20px;
       background-color: white;
       padding: 15px;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       text-align: center;
       width: 200px;
+      height: fit-content;
     }
 
     .profile-container img {
@@ -67,14 +76,14 @@
       background-color: #45a049;
     }
 
+    /* Short URL Section */
     .shorten-url-container {
-      max-width: 400px;
-      margin: 100px auto 0 auto;
       background-color: white;
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       text-align: center;
+      width: 350px;
     }
 
     .shorten-url-container h2 {
@@ -83,11 +92,12 @@
     }
 
     .shorten-url-container input[type="text"] {
-      width: 80%;
+      width: 90%;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 5px;
       outline: none;
+      margin-bottom: 10px;
     }
 
     .shorten-url-container button {
@@ -97,7 +107,6 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      margin-top: 10px;
       transition: background 0.3s ease;
     }
 
@@ -105,7 +114,47 @@
       background-color: #45a049;
     }
 
-    /* Popup Modal Styles */
+    /* Shortened URLs Table */
+    .url-table-container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 400px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .url-table-container h3 {
+      color: #4caf50;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    a {
+      color: #4caf50;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Popup Modal */
     .modal {
       display: none;
       position: fixed;
@@ -155,22 +204,32 @@
 <body>
   <div class="header">Dashboard</div>
 
-  <!-- Profile Section -->
-  <div class="profile-container">
-    <img src="<%= user.photos[0].value %>" alt="Profile Picture" />
-    <h1>Welcome, <%= user.displayName %>!</h1>
-    <p>Email: <%= user.emails[0].value %></p>
-    <a class="logout-btn" href="/logout">Logout</a>
-  </div>
+  <div class="dashboard-container">
+    <!-- Profile Section -->
+    <div class="profile-container">
+      <img src="<%= user.photos[0].value %>" alt="Profile Picture" />
+      <h1>Welcome, <%= user.displayName %>!</h1>
+      <p>Email: <%= user.emails[0].value %></p>
+      <a class="logout-btn" href="/logout">Logout</a>
+    </div>
 
-  <!-- Shorten URL Section -->
-  <div class="shorten-url-container">
-    <h2>Shorten URL</h2>
-    <form id="shortUrl">
-      <input type="text" name="longUrl" placeholder="Enter URL to shorten" required />
-      <br />
-      <button type="submit">Shorten URL</button>
-    </form>
+    <!-- Short URL Section -->
+    <div class="shorten-url-container">
+      <h2>Shorten URL</h2>
+      <form id="shortUrl">
+        <input type="text" name="longUrl" placeholder="Enter URL to shorten" required />
+        <input type="text" name="topic" placeholder="Enter Topic" required />
+        <button type="submit">Shorten URL</button>
+      </form>
+    </div>
+
+    <!-- Shortened URLs Table -->
+    <div class="url-table-container">
+      <h3>Your Shortened URLs</h3>
+      <table id="urlTable">
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Popup Modal -->
@@ -183,53 +242,90 @@
   </div>
 
   <script>
-    const userEmail = "<%= user.emails[0].value %>"; 
-    const form = document.getElementById("shortUrl");
-    const modal = document.getElementById("popupModal");
-    const shortUrlInput = document.getElementById("shortUrlInput");
-    const copyBtn = document.getElementById("copyBtn");
+    const userEmail = "<%= user.emails[0].value %>";
+const form = document.getElementById("shortUrl");
+const modal = document.getElementById("popupModal");
+const shortUrlInput = document.getElementById("shortUrlInput");
+const copyBtn = document.getElementById("copyBtn");
+const urlTable = document.getElementById("urlTable");
 
-    form.addEventListener("submit", (event) => {
-      event.preventDefault(); 
+const fetchShortenedUrls = () => {
+  fetch(`http://localhost:3000/api/user-urls?email=${userEmail}`)
+    .then((res) => res.json())
+    .then((urls) => {
+      urlTable.innerHTML = ""; 
 
-      const dataToSubmit = {
-        longUrl: form.longUrl.value,
-        topic: "",
-        user_mail: userEmail,
-      };
-
-      fetch("http://localhost:3000/api/shorten", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(dataToSubmit),
-      })
-        .then((res) => res.json())
-        .then((response) => {
-          shortUrlInput.value = `${response.shortUrl}`;
-          modal.style.display = "flex";
-        })
-        .catch((error) => {
-          console.error("Error:", error);
+      if (urls.length === 0) {
+       
+        const noUrlsMessage = `
+          <tr>
+            <td colspan="2" style="text-align: center; color: #888; padding: 10px;">
+              No URLs to display.
+            </td>
+          </tr>
+        `;
+        urlTable.insertAdjacentHTML("beforeend", noUrlsMessage);
+      } else {
+       
+        urls.forEach((url) => {
+          const row = `
+            <tr>
+              <td><a href="${url.shortUrl}" target="_blank">${url.shortUrl}</a></td>
+              <td>${url.clicks} clicks</td>
+            </tr>
+          `;
+          urlTable.insertAdjacentHTML("beforeend", row);
         });
-    });
-
-    // Copy to Clipboard Function
-    copyBtn.addEventListener("click", () => {
-      shortUrlInput.select();
-      document.execCommand("copy");
-
-      // Close the modal after copying
-      modal.style.display = "none";
-    });
-
-    // Close modal when clicking outside the modal content
-    window.addEventListener("click", (event) => {
-      if (event.target === modal) {
-        modal.style.display = "none";
       }
+    })
+    .catch((error) => console.error("Error fetching URLs:", error));
+};
+
+fetchShortenedUrls();
+
+
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const dataToSubmit = {
+    longUrl: form.longUrl.value,
+    topic: form.topic.value,
+    user_mail: userEmail,
+  };
+
+  fetch("http://localhost:3000/api/shorten", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(dataToSubmit),
+  })
+    .then((res) => res.json())
+    .then((response) => {
+      shortUrlInput.value = `${response.shortUrl}`;
+      modal.style.display = "flex";
+      fetchShortenedUrls(); 
+    })
+    .catch((error) => {
+      console.error("Error:", error);
     });
+
+  form.reset(); 
+});
+
+
+copyBtn.addEventListener("click", () => {
+  shortUrlInput.select();
+  document.execCommand("copy");
+  modal.style.display = "none"; 
+});
+
+
+window.addEventListener("click", (event) => {
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
+});
   </script>
 </body>
 </html>
