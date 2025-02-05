@@ -7,7 +7,12 @@ import requestIp from 'request-ip'
 import geoip from 'geoip-lite'
 import redisClient from "../auth/redisClient.js";
 import { UAParser } from 'ua-parser-js';
+import dotenv from 'dotenv'
+dotenv.config()
+
  const BASE_URL=process.env.BASE_URL;
+
+
 
 
 
