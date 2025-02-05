@@ -7,6 +7,7 @@ import requestIp from 'request-ip'
 import geoip from 'geoip-lite'
 import redisClient from "../auth/redisClient.js";
 import { UAParser } from 'ua-parser-js';
+ const BASE_URL=process.env.BASE_URL;
 
 
 
@@ -41,7 +42,7 @@ shortUrl.post("/shorten", urlValidator, async (req, res) => {
      
       res
         .status(201)
-        .send({ shortUrl:`http://localhost:3000/api/shorten/${shortUrl.alias}`});
+        .send({ shortUrl:`${BASE_URL}/api/shorten/${shortUrl.alias}`});
     
   } catch (error) {
     res
@@ -237,7 +238,7 @@ shortUrl.get("/analytics/topic/:topic", async (req, res) => {
       const uniqueIPs = new Set(urlAnalytics.map(data => data.ipAddress));
 
       return {
-        shortUrl: `http://localhost:3000/shorten/${url.alias}`, 
+        shortUrl: `${BASE_URL}/shorten/${url.alias}`, 
         totalClicks: urlAnalytics.length,
         uniqueUsers: uniqueIPs.size
       };
@@ -356,7 +357,7 @@ shortUrl.get("/user-urls", async (req, res) => {
   try {
     const urls = await UrlModel.find({ user_mail: email });
     const response = urls.map(url => ({
-      shortUrl: `http://localhost:3000/api/shorten/${url.alias}`,
+      shortUrl: `${BASE_URL}/api/shorten/${url.alias}`,
       clicks: url.uniqueClicks || 0, // Assuming clicks are stored
     }));
     res.json(response);

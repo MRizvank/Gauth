@@ -242,6 +242,7 @@
   </div>
 
   <script>
+
     const userEmail = "<%= user.emails[0].value %>";
 const form = document.getElementById("shortUrl");
 const modal = document.getElementById("popupModal");
@@ -250,7 +251,7 @@ const copyBtn = document.getElementById("copyBtn");
 const urlTable = document.getElementById("urlTable");
 
 const fetchShortenedUrls = () => {
-  fetch(`http://localhost:3000/api/user-urls?email=${userEmail}`)
+  fetch(`https://gauth-eyjy.onrender.com/api/user-urls?email=${userEmail}`)
     .then((res) => res.json())
     .then((urls) => {
       urlTable.innerHTML = ""; 
@@ -293,7 +294,7 @@ form.addEventListener("submit", (event) => {
     user_mail: userEmail,
   };
 
-  fetch("http://localhost:3000/api/shorten", {
+  fetch("https://gauth-eyjy.onrender.com/api/shorten", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
